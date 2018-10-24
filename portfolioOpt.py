@@ -22,7 +22,7 @@ class powerPlantPortfolio:
         def __init__(self,dt=0.25):
 
             self.m = Model('portfolio')                 # Anlegen eines Models ins Gurobi    
-#            self.m.Params.OutputFlag=0                  # keine Ausgabe der Optimierungsergebnisse
+            self.m.Params.OutputFlag=0                  # keine Ausgabe der Optimierungsergebnisse
             self.dt = dt                                # Zeitschrittweite/ Auflösung
             self.powerPlants = []                       # Anlegen einer Liste mit allen Kraftwerken im Portfolio
             
@@ -145,6 +145,13 @@ class powerPlantPortfolio:
                 end = np.min([i+powerPlant['runTime']-1,self.T])
                 tau = np.arange(start,end)
                 self.m.addConstrs(on[i]-on[i-1] <= on[k] for k in tau)
+                
+            if len(powerPlant['heat']) > 0:
+                print(powerPlant['heat'])
+                self.m.addConstrs(power[i] >= powerPlant['heat'][i] for i in self.t)
+            
+            
+            
             # Einbinden der NB in das Model
             self.m.update()
             
@@ -366,14 +373,15 @@ if __name__ == "__main__":
                'grad-'      :   100,
                'stopTime'   :   8,
                'runTime'    :   7,
-               'P0'         :   0,
-               'on'         :   -2}
+               'P0'         :   600,
+               'on'         :   1,
+               'heat'       :   np.random.chisquare(0.3,24)*50 + 50}
     
     myPlan2 = {'typ'        :   'konv',
                'name'       :   'NR',
                'fuel'       :   'gas',
                'powerMax'   :   1000,
-               'powerMin'   :   350,
+               'powerMin'   :   100,
                'eta'        :   0.45,
                'chi'        :   0.15,
                'grad+'      :   150,
@@ -381,7 +389,8 @@ if __name__ == "__main__":
                'stopTime'   :   3,
                'runTime'    :   2,
                'P0'         :   400,
-               'on'         :   1}
+               'on'         :   1,
+               'heat'       :   np.random.chisquare(0.5,24)*200 + 50}
     
     myPlan3 = {'typ'        :   'storage',
                'name'       :   'VI',
@@ -407,5 +416,5 @@ if __name__ == "__main__":
     myPortfolio.addPowerPlant(myPlan3)          
     myPortfolio.buildModel()
     myPortfolio.runOpt()
-#    myPortfolio.buildModel()
-#    myPortfolio.runOpt()            
+    myPortfolio.buildModel()
+    myPortfolio.runOpt()            
